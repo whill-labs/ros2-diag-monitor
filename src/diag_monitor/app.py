@@ -4,12 +4,14 @@ from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.widgets import Static
 
-from diag_monitor.store import DiagStore, LEVEL_WARN, LEVEL_ERROR
+from diag_monitor.store import DiagStore, LEVEL_OK, LEVEL_WARN, LEVEL_ERROR, LEVEL_STALE
 from diag_monitor.widgets.item_list import ItemList
 from diag_monitor.widgets.detail_view import DetailView
 from diag_monitor.widgets.history_view import HistoryView
 
 _NO_DATA_TIMEOUT = 10.0  # seconds
+_HEADER_LEVEL_CLASSES = {LEVEL_OK: "level-ok", LEVEL_WARN: "level-warn", LEVEL_ERROR: "level-error"}
+_ALL_HEADER_LEVEL_CLASSES = set(_HEADER_LEVEL_CLASSES.values())
 
 
 class DiagMonitorApp(App):
@@ -58,7 +60,15 @@ class DiagMonitorApp(App):
             header_text += f"  \u26a0 {warn_count}"
         if error_count:
             header_text += f"  \u2717 {error_count}"
-        self.query_one("#header", Static).update(header_text)
+        header = self.query_one("#header", Static)
+        header.update(header_text)
+
+        # Update header color based on worst level (STALE excluded)
+        levels = [i.level for i in items.values() if i.level != LEVEL_STALE]
+        worst = max(levels) if levels else None
+        header.remove_class(*_ALL_HEADER_LEVEL_CLASSES)
+        if worst is not None and worst in _HEADER_LEVEL_CLASSES:
+            header.add_class(_HEADER_LEVEL_CLASSES[worst])
 
         # Update left pane
         item_list = self.query_one("#item-list", ItemList)

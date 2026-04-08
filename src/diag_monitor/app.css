@@ -13,6 +13,21 @@ Screen {
     text-align: center;
 }
 
+#header.level-ok {
+    background: #2e7d32;
+    color: white;
+}
+
+#header.level-warn {
+    background: #f9a825;
+    color: black;
+}
+
+#header.level-error {
+    background: #c62828;
+    color: white;
+}
+
 #item-list {
     row-span: 1;
     height: 100%;

@@ -5,6 +5,7 @@ A terminal UI for monitoring ROS2 diagnostics over SSH.
 ## Features
 
 - Real-time diagnostics monitoring with lazygit-style 3-pane layout
+- Header color changes based on worst diagnostic level (green=OK, yellow=WARN, red=ERROR)
 - Items grouped by level (ERROR / WARN / STALE / OK)
 - Detailed view with key-value pairs
 - Status change history tracking
@@ -35,11 +36,11 @@ pipx install --system-site-packages ros2-diag-monitor
 ```bash
 source /opt/ros/jazzy/setup.bash
 
-# Monitor /diagnostics (default)
+# Monitor aggregated diagnostics (default)
 diag-monitor
 
-# Monitor aggregated diagnostics
-diag-monitor --topic /diagnostics_agg
+# Monitor /diagnostics
+diag-monitor --topic /diagnostics
 
 # Save status changes to file
 diag-monitor --log-file diag.log
