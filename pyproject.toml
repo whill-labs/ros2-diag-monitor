@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ros2-diag-monitor"
-version = "0.1.0"
+version = "0.1.1"
 description = "A terminal UI for monitoring ROS2 diagnostics over SSH"
 readme = "README.md"
 authors = [
@@ -15,6 +15,9 @@ requires-python = ">=3.10"
 dependencies = [
     "textual>=0.50",
 ]
+
+[project.urls]
+Repository = "https://github.com/whill-labs/ros2-diag-monitor"
 
 [project.scripts]
 diag-monitor = "diag_monitor.cli:main"
