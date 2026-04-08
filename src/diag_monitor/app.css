@@ -1,0 +1,45 @@
+Screen {
+    layout: grid;
+    grid-size: 2 3;
+    grid-rows: auto 1fr 3;
+    grid-columns: 1fr 2fr;
+}
+
+#header {
+    column-span: 2;
+    height: 1;
+    background: $accent;
+    color: $text;
+    text-align: center;
+}
+
+#item-list {
+    row-span: 1;
+    height: 100%;
+    border-right: solid $primary;
+}
+
+#right-pane {
+    layout: grid;
+    grid-size: 1 2;
+    grid-rows: 2fr 1fr;
+}
+
+#detail-view {
+    height: 100%;
+    padding: 0 1;
+    border-bottom: solid $primary;
+}
+
+#history-view {
+    height: 100%;
+    padding: 0 1;
+}
+
+#footer {
+    column-span: 2;
+    height: 1;
+    background: $surface;
+    color: $text-muted;
+    text-align: center;
+}
