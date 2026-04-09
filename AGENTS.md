@@ -57,6 +57,24 @@ CLI (`cli.py`) → orchestrates startup and shutdown
 
 Tests mock `rclpy`, so no ROS2 environment is required to run them. `pytest` is configured in `pyproject.toml` to disable ROS2/ament pytest plugins (`-p no:launch_testing`, etc.), which keeps test runs clean outside colcon workspaces.
 
+## Version Bump
+
+Version is defined in two places — both must be updated:
+
+1. `pyproject.toml` → `version = "X.Y.Z"`
+2. `src/diag_monitor/__init__.py` → `__version__ = "X.Y.Z"`
+
+```bash
+# After editing both files:
+uv lock
+uv run pytest
+git add pyproject.toml uv.lock src/diag_monitor/__init__.py
+git commit -m "chore: bump version to X.Y.Z"
+git tag vX.Y.Z
+```
+
+Tags use the `v` prefix (e.g., `v0.1.2`).
+
 ## Design Notes
 
 - **History recording rule:** Only level transitions are recorded (for example, `OK → WARN`). Repeated updates at the same level are not stored. The first observation is also recorded (`prev_level=None`).
