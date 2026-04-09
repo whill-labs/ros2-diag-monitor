@@ -17,8 +17,12 @@ class ItemList(Tree[str]):
         self.show_root = False
         self.root.expand()
         self._selected_name: str | None = None
-        # Track nodes for diff updates
+        # Pre-create branches in _LEVEL_ORDER so ordering is always correct
         self._branches: dict[int, TreeNode] = {}
+        for level in _LEVEL_ORDER:
+            icon = _LEVEL_ICONS[level]
+            branch = self.root.add(f"{icon} {LEVEL_NAMES[level]} (0)", expand=True)
+            self._branches[level] = branch
         self._leaves: dict[str, TreeNode] = {}
         self._leaf_levels: dict[str, int] = {}
 
@@ -31,23 +35,13 @@ class ItemList(Tree[str]):
             self._selected_name = event.node.data
 
     def _ensure_branch(self, level: int) -> TreeNode:
-        if level not in self._branches:
-            icon = _LEVEL_ICONS[level]
-            branch = self.root.add(f"{icon} {LEVEL_NAMES[level]} (0)", expand=True)
-            self._branches[level] = branch
         return self._branches[level]
 
     def _update_branch_label(self, level: int) -> None:
-        if level not in self._branches:
-            return
         branch = self._branches[level]
         count = len(branch.children)
-        if count == 0:
-            branch.remove()
-            del self._branches[level]
-        else:
-            icon = _LEVEL_ICONS[level]
-            branch.set_label(f"{icon} {LEVEL_NAMES[level]} ({count})")
+        icon = _LEVEL_ICONS[level]
+        branch.set_label(f"{icon} {LEVEL_NAMES[level]} ({count})")
 
     def refresh_items(self, items: dict[str, DiagItem]) -> None:
         current_names = set(items.keys())
