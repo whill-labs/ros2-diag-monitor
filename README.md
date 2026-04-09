@@ -2,6 +2,8 @@
 
 A terminal UI for monitoring ROS2 diagnostics over SSH.
 
+![screenshot](docs/assets/screenshot.png)
+
 ## Features
 
 - Real-time diagnostics monitoring with lazygit-style 3-pane layout
