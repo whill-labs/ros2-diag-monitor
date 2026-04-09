@@ -4,6 +4,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.widgets import Static
 
+from diag_monitor import __version__
 from diag_monitor.store import DiagStore, LEVEL_OK, LEVEL_WARN, LEVEL_ERROR, LEVEL_STALE
 from diag_monitor.widgets.item_list import ItemList
 from diag_monitor.widgets.detail_view import DetailView
@@ -42,7 +43,11 @@ class DiagMonitorApp(App):
             HistoryView(id="history-view"),
             id="right-pane",
         )
-        yield Static(" q:Quit  /:Filter  Tab:Pane  t:Topic  R:Reload  ?:Help", id="footer")
+        yield Static(
+            f" q:Quit  /:Filter  Tab:Pane  t:Topic  R:Reload  ?:Help"
+            f"  │  v{__version__}  [@click=app.open_repo]github.com/whill-labs/ros2-diag-monitor[/]",
+            id="footer",
+        )
 
     def on_mount(self) -> None:
         self.set_interval(1.0, self._refresh_ui)
@@ -108,6 +113,11 @@ class DiagMonitorApp(App):
         self._no_data_notified = False
         self._monitor_start = datetime.now()
         self.notify("Reloaded")
+
+    def action_open_repo(self) -> None:
+        url = "https://github.com/whill-labs/ros2-diag-monitor"
+        self.copy_to_clipboard(url)
+        self.notify(f"Copied: {url}")
 
     def action_switch_topic(self) -> None:
         if self._ros_bridge is None:
