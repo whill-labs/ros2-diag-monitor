@@ -1,0 +1,75 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run tests
+        run: uv run pytest
+
+  test-ros2:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        ros:
+          - { distro: humble, os: ubuntu-22.04 }
+          - { distro: jazzy, os: ubuntu-24.04 }
+          - { distro: rolling, os: ubuntu-24.04 }
+
+    runs-on: ${{ matrix.ros.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup ROS environment
+        run: |
+          sudo apt update -q
+          sudo apt install -yqq curl
+
+          keyring=/usr/share/keyrings/ros-archive-keyring.gpg
+          codename=$(. /etc/os-release && echo $UBUNTU_CODENAME)
+          sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o ${keyring}
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=${keyring}] http://packages.ros.org/ros2/ubuntu ${codename} main" |
+            sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+          sudo apt update -q
+          sudo apt install -yqq \
+            ros-${{ matrix.ros.distro }}-ros-base \
+            ros-${{ matrix.ros.distro }}-rclpy
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+
+      # --system-site-packages is required so the venv can access rclpy
+      # installed by the ROS2 apt packages above.
+      - name: Install dependencies
+        run: |
+          uv venv --system-site-packages
+          uv sync
+
+      - name: Run tests
+        run: |
+          source /opt/ros/${{ matrix.ros.distro }}/setup.bash
+          uv run pytest
