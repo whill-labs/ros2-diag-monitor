@@ -67,13 +67,18 @@ Screen {
     background: $surface;
 }
 
+/* Reset the grid inherited from the `Screen` rule above, which would
+   otherwise confine the dialog to a single cell of the main layout. */
 HelpScreen {
+    layout: vertical;
     align: center middle;
 }
 
 #help-dialog {
     width: 45;
+    max-width: 100%;
     height: auto;
+    max-height: 100%;
     background: $surface;
     border: thick $primary;
     padding: 1 2;
