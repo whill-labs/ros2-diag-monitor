@@ -14,6 +14,8 @@ A terminal UI for monitoring ROS2 diagnostics over SSH.
 - Optional JSONL log file output
 - Topic switching between `/diagnostics` and `/diagnostics_agg`
 - Reload subscription with `R` key (useful after network recovery)
+- Incremental name filter with `/` key (case-insensitive substring match)
+- Keybinding help modal with `?` key
 
 ## Requirements
 
