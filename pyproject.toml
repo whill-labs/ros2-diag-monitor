@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ros2-diag-monitor"
-version = "0.1.2"
+version = "0.2.0"
 description = "A terminal UI for monitoring ROS2 diagnostics over SSH"
 readme = "README.md"
 authors = [
