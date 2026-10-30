@@ -21,6 +21,7 @@ A terminal UI for monitoring ROS2 diagnostics over SSH.
 
 - Python >= 3.10 (must match your ROS2 distribution's Python)
 - ROS2 environment with `rclpy` available
+- Textual >= 0.57 for terminal clipboard support
 
 ## Install
 
@@ -56,11 +57,18 @@ diag-monitor --log-file diag.log
 |---|---|
 | `j`/`k` or `Up`/`Down` | Navigate items |
 | `Tab` | Switch pane focus |
+| `PageUp`/`PageDown`, `Home`/`End` | Scroll the focused details or history pane |
+| `c` | Copy the entire selected diagnostic, including fields outside the viewport |
 | `t` | Toggle topic (`/diagnostics` <-> `/diagnostics_agg`) |
 | `R` | Reload (re-subscribe and clear) |
 | `/` | Filter by name |
 | `q` | Quit |
 | `?` | Help |
+
+Details and history scroll independently, including in an 80×24 SSH terminal.
+Changing the selection returns both panes to the top; periodic updates preserve
+the scroll position. Clipboard transfer uses the terminal's clipboard support
+(OSC 52), which may need enabling in your SSH client or terminal multiplexer.
 
 ## Development
 

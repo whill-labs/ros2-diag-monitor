@@ -2,7 +2,7 @@ from datetime import datetime
 
 from rich.markup import escape
 from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical
+from textual.containers import Container, Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Input, Static
 
@@ -44,6 +44,7 @@ class HelpScreen(ModalScreen):
                 "  [b]t[/b]         Switch topic\n"
                 "  [b]R[/b]         Reload subscription\n"
                 "  [b]Tab[/b]       Switch pane\n"
+                "  [b]c[/b]         Copy selected diagnostic\n"
                 "  [b]\u2191[/b] [b]\u2193[/b]       Navigate\n"
                 "  [b]q[/b]         Quit\n"
                 "\n"
@@ -63,6 +64,7 @@ class DiagMonitorApp(App):
         ("question_mark", "help", "Help"),
         ("t", "switch_topic", "Switch Topic"),
         ("R", "reload", "Reload"),
+        ("c", "copy_diagnostic", "Copy diagnostic"),
     ]
 
     def __init__(self, store: DiagStore, ros_bridge=None, **kwargs) -> None:
@@ -72,18 +74,19 @@ class DiagMonitorApp(App):
         self._no_data_notified: bool = False
         self._monitor_start: datetime = datetime.now()
         self._filter_text: str = ""
+        self._displayed_item = None
 
     def compose(self) -> ComposeResult:
         topic = self._ros_bridge.topic if self._ros_bridge else "/diagnostics"
         yield Static(f" diag-monitor  {topic}  Loading...", id="header")
         yield ItemList(id="item-list")
         yield Container(
-            DetailView(id="detail-view"),
-            HistoryView(id="history-view"),
+            VerticalScroll(DetailView(id="detail-view"), id="detail-pane"),
+            VerticalScroll(HistoryView(id="history-view"), id="history-pane"),
             id="right-pane",
         )
         yield Static(
-            f" q:Quit  /:Filter  Tab:Pane  t:Topic  R:Reload  ?:Help"
+            f" q:Quit  /:Filter  Tab:Pane  c:Copy  t:Topic  R:Reload  ?:Help"
             f"  │  v{__version__}  [@click=app.open_repo]github.com/whill-labs/ros2-diag-monitor[/]",
             id="footer",
         )
@@ -137,6 +140,10 @@ class DiagMonitorApp(App):
         else:
             detail.show_item(None)
             history_view.show_history(None)
+        if selected != self._displayed_item:
+            self.query_one("#detail-pane", VerticalScroll).scroll_home(animate=False)
+            self.query_one("#history-pane", VerticalScroll).scroll_home(animate=False)
+            self._displayed_item = selected
 
         # No-data timeout: suggest switching to /diagnostics
         if not self._no_data_notified and self._ros_bridge is not None:
@@ -152,6 +159,15 @@ class DiagMonitorApp(App):
                     severity="warning",
                     timeout=10,
                 )
+
+    def action_copy_diagnostic(self) -> None:
+        self._refresh_ui()
+        text = self.query_one("#detail-view", DetailView).plain_text
+        if text:
+            self.copy_to_clipboard(text)
+            self.notify("Copied diagnostic")
+        else:
+            self.notify("Select a diagnostic first", severity="warning")
 
     def action_reload(self) -> None:
         if self._ros_bridge is None:

@@ -40,14 +40,17 @@ Screen {
     grid-rows: 2fr 1fr;
 }
 
-#detail-view {
+#detail-pane {
     height: 100%;
-    padding: 0 1;
     border-bottom: solid $primary;
 }
 
-#history-view {
+#history-pane {
     height: 100%;
+}
+
+#detail-view, #history-view {
+    height: auto;
     padding: 0 1;
 }
 

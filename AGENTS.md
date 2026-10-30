@@ -21,7 +21,7 @@ uv sync
 # Run
 uv run diag-monitor
 
-# Run tests (all 9 tests, no ROS2 environment needed)
+# Run tests (no ROS2 environment needed)
 uv run pytest
 
 # Run a single test
@@ -83,6 +83,7 @@ Tags use the `v` prefix (e.g., `v0.1.2`).
 - **`rclpy` level type caveat:** `status.level` may be `int` or `bytes` depending on the ROS2 version. `ros_bridge.py`'s `_parse_level()` handles both.
 - **JSONL log format:** `{"timestamp":"...","name":"...","prev":"OK","new":"WARN","message":"..."}` (`prev` is `null` on the first observation).
 - **Default topic behavior:** `diag-monitor` starts on `/diagnostics_agg` by default, and the UI can switch topics with `t`.
-- **Key bindings:** `DiagMonitorApp.BINDINGS` is the source of truth (`q` quit, `/` filter, `?` help, `t` switch topic, `R` reload). Changing a binding means updating three places together: `BINDINGS`, the `HelpScreen` list in `app.py`, and the "Key Bindings" table in `README.md`.
+- **Key bindings:** `DiagMonitorApp.BINDINGS` is the source of truth (`q` quit, `/` filter, `?` help, `t` switch topic, `R` reload, `c` copy diagnostic). Changing a binding means updating three places together: `BINDINGS`, the `HelpScreen` list in `app.py`, and the "Key Bindings" table in `README.md`.
 - **Name filter:** case-insensitive substring match on the item name, applied only when rendering in `_refresh()`. `DiagStore` still holds every item, so clearing the filter restores them immediately. An active filter is shown in the header.
+- **Scrollable panes:** focusable `VerticalScroll` containers wrap the details/history widgets. Tab switches panes; selecting a different diagnostic resets their scroll position. `c` copies `DetailView.plain_text` in full, preserving literal diagnostic values independently of the viewport.
 - **Out of scope (future candidates):** diagnostic_aggregator config display, manual clear/reset, multi-topic subscription, web UI.

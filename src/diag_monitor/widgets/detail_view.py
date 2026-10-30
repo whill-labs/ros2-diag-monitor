@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from rich.markup import escape
+from rich.text import Text
 from textual.widgets import Static
 
 from diag_monitor.store import DiagItem, LEVEL_NAMES, LEVEL_OK, LEVEL_WARN, LEVEL_ERROR, LEVEL_STALE
@@ -12,9 +14,11 @@ class DetailView(Static):
 
     def __init__(self, **kwargs) -> None:
         super().__init__("", **kwargs)
+        self.plain_text = ""
 
     def show_item(self, item: DiagItem | None) -> None:
         if item is None:
+            self.plain_text = ""
             self.update("Select an item to view details")
             return
 
@@ -22,10 +26,10 @@ class DetailView(Static):
         style = _LEVEL_STYLES.get(item.level, "white")
 
         lines: list[str] = [
-            f"[bold]Name:[/] {item.name}",
+            f"[bold]Name:[/] {escape(item.name)}",
             f"[bold]Level:[/] [{style}]{level_name}[/]",
-            f"[bold]Message:[/] {item.message}",
-            f"[bold]HW ID:[/] {item.hardware_id}",
+            f"[bold]Message:[/] {escape(item.message)}",
+            f"[bold]HW ID:[/] {escape(item.hardware_id)}",
             f"[bold]Updated:[/] {item.last_updated.strftime('%H:%M:%S')}",
         ]
 
@@ -33,6 +37,8 @@ class DetailView(Static):
             lines.append("")
             lines.append("[bold]Key-Values:[/]")
             for key, value in item.values:
-                lines.append(f"  {key}: {value}")
+                lines.append(f"  {escape(key)}: {escape(value)}")
 
-        self.update("\n".join(lines))
+        content = Text.from_markup("\n".join(lines))
+        self.plain_text = content.plain
+        self.update(content)
