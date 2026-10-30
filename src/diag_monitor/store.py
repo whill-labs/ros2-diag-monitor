@@ -10,6 +10,8 @@ LEVEL_WARN = 1
 LEVEL_ERROR = 2
 LEVEL_STALE = 3
 
+DiagnosticKey = tuple[str, str]
+
 LEVEL_NAMES = {LEVEL_OK: "OK", LEVEL_WARN: "WARN", LEVEL_ERROR: "ERROR", LEVEL_STALE: "STALE"}
 
 
@@ -37,8 +39,8 @@ _HISTORY_MAXLEN = 100
 class DiagStore:
     def __init__(self) -> None:
         self._lock = Lock()
-        self._items: dict[str, DiagItem] = {}
-        self._history: dict[str, deque[StatusChange]] = {}
+        self._items: dict[DiagnosticKey, DiagItem] = {}
+        self._history: dict[DiagnosticKey, deque[StatusChange]] = {}
         self._last_msg_time: datetime | None = None
 
     def update(
@@ -50,10 +52,11 @@ class DiagStore:
         values: list[tuple[str, str]],
     ) -> StatusChange | None:
         now = datetime.now()
+        key = (name, hardware_id)
         with self._lock:
             self._last_msg_time = now
-            prev = self._items.get(name)
-            self._items[name] = DiagItem(
+            prev = self._items.get(key)
+            self._items[key] = DiagItem(
                 name=name,
                 level=level,
                 message=message,
@@ -62,22 +65,22 @@ class DiagStore:
                 last_updated=now,
             )
 
-            if name not in self._history:
-                self._history[name] = deque(maxlen=_HISTORY_MAXLEN)
+            if key not in self._history:
+                self._history[key] = deque(maxlen=_HISTORY_MAXLEN)
 
             if prev is None:
                 change = StatusChange(timestamp=now, prev_level=None, new_level=level, message=message)
-                self._history[name].append(change)
+                self._history[key].append(change)
                 return change
 
             if prev.level != level:
                 change = StatusChange(timestamp=now, prev_level=prev.level, new_level=level, message=message)
-                self._history[name].append(change)
+                self._history[key].append(change)
                 return change
 
             return None
 
-    def snapshot(self) -> tuple[dict[str, DiagItem], dict[str, list[StatusChange]]]:
+    def snapshot(self) -> tuple[dict[DiagnosticKey, DiagItem], dict[DiagnosticKey, list[StatusChange]]]:
         with self._lock:
             items = dict(self._items)
             history = {k: list(v) for k, v in self._history.items()}

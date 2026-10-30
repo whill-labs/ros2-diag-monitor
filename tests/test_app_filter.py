@@ -15,7 +15,7 @@ def make_store() -> DiagStore:
 def leaf_names(app: DiagMonitorApp) -> set[str]:
     """Item names currently shown as leaves in the left pane."""
     item_list = app.query_one("#item-list")
-    return {node.data for branch in item_list.root.children for node in branch.children}
+    return {node.data[0] for branch in item_list.root.children for node in branch.children}
 
 
 def header_text(app: DiagMonitorApp) -> str:

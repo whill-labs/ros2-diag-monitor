@@ -127,7 +127,7 @@ class DiagMonitorApp(App):
         item_list.refresh_items(items)
 
         # Update right pane
-        selected = item_list.selected_name
+        selected = item_list.selected_key
         detail = self.query_one("#detail-view", DetailView)
         history_view = self.query_one("#history-view", HistoryView)
 

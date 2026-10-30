@@ -32,10 +32,10 @@ def test_store_update_new_item():
     store.update("sensor: freq", LEVEL_OK, "OK", "sensor_node", [("hz", "10")])
 
     items, history = store.snapshot()
-    assert "sensor: freq" in items
-    assert items["sensor: freq"].level == LEVEL_OK
+    assert ("sensor: freq", "sensor_node") in items
+    assert items[("sensor: freq", "sensor_node")].level == LEVEL_OK
 
-    changes = history["sensor: freq"]
+    changes = history[("sensor: freq", "sensor_node")]
     assert len(changes) == 1
     assert changes[0].prev_level is None
     assert changes[0].new_level == LEVEL_OK
@@ -47,7 +47,7 @@ def test_store_update_level_change_records_history():
     store.update("sensor: freq", LEVEL_WARN, "Low freq", "sensor_node", [])
 
     _, history = store.snapshot()
-    changes = history["sensor: freq"]
+    changes = history[("sensor: freq", "sensor_node")]
     assert len(changes) == 2
     assert changes[1].prev_level == LEVEL_OK
     assert changes[1].new_level == LEVEL_WARN
@@ -59,5 +59,5 @@ def test_store_update_same_level_no_new_history():
     store.update("sensor: freq", LEVEL_OK, "Still OK", "sensor_node", [])
 
     _, history = store.snapshot()
-    changes = history["sensor: freq"]
+    changes = history[("sensor: freq", "sensor_node")]
     assert len(changes) == 1  # Only first-seen; same level does not add history

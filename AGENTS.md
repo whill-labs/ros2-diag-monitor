@@ -21,7 +21,7 @@ uv sync
 # Run
 uv run diag-monitor
 
-# Run tests (all 9 tests, no ROS2 environment needed)
+# Run tests (no ROS2 environment needed)
 uv run pytest
 
 # Run a single test
@@ -54,6 +54,10 @@ CLI (`cli.py`) → orchestrates startup and shutdown
 **Threading model:** `RosBridge` runs `rclpy.spin()` in a daemon thread. The Textual UI runs in the main thread and reads `store.snapshot()` every second. All store mutations are protected by a `Lock`.
 
 **Level constants:** `store.py` defines `LEVEL_OK=0`, `LEVEL_WARN=1`, `LEVEL_ERROR=2`, and `LEVEL_STALE=3`.
+
+**Diagnostic identity:** store/history/tree keys are `(name, hardware_id)` tuples
+(`DiagnosticKey`). `ItemList.selected_key` selects the exact device; labels show
+hardware IDs. Sources with the same name and hardware ID remain indistinguishable.
 
 ## Testing
 

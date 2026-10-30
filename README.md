@@ -9,6 +9,7 @@ A terminal UI for monitoring ROS2 diagnostics over SSH.
 - Real-time diagnostics monitoring with lazygit-style 3-pane layout
 - Header color changes based on worst diagnostic level (green=OK, yellow=WARN, red=ERROR)
 - Items grouped by level (ERROR / WARN / STALE / OK)
+- Diagnostics identified by both name and hardware ID, with hardware IDs shown in the list
 - Detailed view with key-value pairs
 - Status change history tracking
 - Optional JSONL log file output
@@ -49,6 +50,10 @@ diag-monitor --topic /diagnostics
 # Save status changes to file
 diag-monitor --log-file diag.log
 ```
+
+Two devices with the same diagnostic name retain separate statuses and histories
+when their hardware IDs differ. Publishers sharing both fields are indistinguishable
+in `DiagnosticArray`; assign distinct hardware IDs or diagnostic names to them.
 
 ## Key Bindings
 
