@@ -43,4 +43,7 @@ addopts = [
     "-p no:ament_mypy",
     "-p no:ament_lint",
     "-p no:ament_flake8",
+    # platformdirs 4.14.0 in system site-packages registers this plugin,
+    # but the venv's locked platformdirs (4.9.4) does not ship the module.
+    "-p no:platformdirs",
 ]
