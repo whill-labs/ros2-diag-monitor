@@ -56,7 +56,7 @@ def test_store_update_level_change_records_history():
 def test_store_update_same_level_no_new_history():
     store = DiagStore()
     store.update("sensor: freq", LEVEL_OK, "OK", "sensor_node", [])
-    store.update("sensor: freq", LEVEL_OK, "Still OK", "sensor_node", [])
+    store.update("sensor: freq", LEVEL_OK, "OK", "sensor_node", [("hz", "12")])
 
     _, history = store.snapshot()
     changes = history["sensor: freq"]

@@ -21,7 +21,7 @@ uv sync
 # Run
 uv run diag-monitor
 
-# Run tests (all 9 tests, no ROS2 environment needed)
+# Run tests (no ROS2 environment needed)
 uv run pytest
 
 # Run a single test
@@ -79,10 +79,10 @@ Tags use the `v` prefix (e.g., `v0.1.2`).
 
 ## Design Notes
 
-- **History recording rule:** Only level transitions are recorded (for example, `OK → WARN`). Repeated updates at the same level are not stored. The first observation is also recorded (`prev_level=None`).
+- **History recording rule:** First observations and changes in level, message, hardware ID or configured cause fields create full diagnostic events. Default cause keys are `status`, `state`, `reason`, `error`, `error_code`; `--history-key` overrides them. Frequency/time fluctuations alone are ignored. Events retain ordered duplicate values.
 - **`rclpy` level type caveat:** `status.level` may be `int` or `bytes` depending on the ROS2 version. `ros_bridge.py`'s `_parse_level()` handles both.
-- **JSONL log format:** `{"timestamp":"...","name":"...","prev":"OK","new":"WARN","message":"..."}` (`prev` is `null` on the first observation).
+- **JSONL log format:** Existing timestamp/name/prev/new/message fields plus `hardware_id` and ordered `values: [{"key":"...","value":"..."}]`. `prev` is `null` on first observation. Snapshot export (`e`, `--snapshot-file`) atomically saves all current diagnostics and source/time metadata using `export.py`.
 - **Default topic behavior:** `diag-monitor` starts on `/diagnostics_agg` by default, and the UI can switch topics with `t`.
-- **Key bindings:** `DiagMonitorApp.BINDINGS` is the source of truth (`q` quit, `/` filter, `?` help, `t` switch topic, `R` reload). Changing a binding means updating three places together: `BINDINGS`, the `HelpScreen` list in `app.py`, and the "Key Bindings" table in `README.md`.
+- **Key bindings:** `DiagMonitorApp.BINDINGS` is the source of truth (`q` quit, `/` filter, `?` help, `t` switch topic, `R` reload, `e` export snapshot). Changing a binding means updating three places together: `BINDINGS`, the `HelpScreen` list in `app.py`, and the "Key Bindings" table in `README.md`.
 - **Name filter:** case-insensitive substring match on the item name, applied only when rendering in `_refresh()`. `DiagStore` still holds every item, so clearing the filter restores them immediately. An active filter is shown in the header.
 - **Out of scope (future candidates):** diagnostic_aggregator config display, manual clear/reset, multi-topic subscription, web UI.

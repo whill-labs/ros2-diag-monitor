@@ -16,6 +16,14 @@ def main() -> None:
         help="Diagnostics topic to subscribe (default: /diagnostics_agg)",
     )
     parser.add_argument(
+        "--history-key", action="append", dest="history_keys",
+        help="Record changes to this diagnostic field (repeatable; replaces default cause keys)",
+    )
+    parser.add_argument(
+        "--snapshot-file", type=Path, default=Path("diagnostics-snapshot.json"),
+        help="Output path for the e key (default: diagnostics-snapshot.json)",
+    )
+    parser.add_argument(
         "--log-file",
         type=Path,
         default=None,
@@ -39,13 +47,13 @@ def main() -> None:
     from diag_monitor.ros_bridge import RosBridge
     from diag_monitor.app import DiagMonitorApp
 
-    store = DiagStore()
+    store = DiagStore(history_keys=args.history_keys)
     log_writer = LogWriter(args.log_file) if args.log_file else None
     bridge = RosBridge(store, args.topic, log_writer)
 
     bridge.start()
     try:
-        app = DiagMonitorApp(store=store, ros_bridge=bridge)
+        app = DiagMonitorApp(store=store, ros_bridge=bridge, snapshot_file=args.snapshot_file)
         app.run()
     finally:
         bridge.shutdown()

@@ -29,17 +29,24 @@ class StatusChange:
     prev_level: int | None
     new_level: int
     message: str
+    hardware_id: str = ""
+    values: list[tuple[str, str]] = field(default_factory=list)
 
 
 _HISTORY_MAXLEN = 100
+DEFAULT_HISTORY_KEYS = ("status", "state", "reason", "error", "error_code")
 
 
 class DiagStore:
-    def __init__(self) -> None:
+    def __init__(self, history_keys: list[str] | None = None) -> None:
         self._lock = Lock()
         self._items: dict[str, DiagItem] = {}
         self._history: dict[str, deque[StatusChange]] = {}
         self._last_msg_time: datetime | None = None
+        self._history_keys = frozenset(DEFAULT_HISTORY_KEYS if history_keys is None else history_keys)
+
+    def _cause(self, values: list[tuple[str, str]]) -> list[tuple[str, str]]:
+        return sorted((key, value) for key, value in values if key in self._history_keys)
 
     def update(
         self,
@@ -58,20 +65,18 @@ class DiagStore:
                 level=level,
                 message=message,
                 hardware_id=hardware_id,
-                values=values,
+                values=list(values),
                 last_updated=now,
             )
 
             if name not in self._history:
                 self._history[name] = deque(maxlen=_HISTORY_MAXLEN)
 
-            if prev is None:
-                change = StatusChange(timestamp=now, prev_level=None, new_level=level, message=message)
-                self._history[name].append(change)
-                return change
-
-            if prev.level != level:
-                change = StatusChange(timestamp=now, prev_level=prev.level, new_level=level, message=message)
+            if (prev is None or prev.level != level or prev.message != message
+                    or prev.hardware_id != hardware_id or self._cause(prev.values) != self._cause(values)):
+                change = StatusChange(timestamp=now, prev_level=prev.level if prev else None,
+                                      new_level=level, message=message, hardware_id=hardware_id,
+                                      values=list(values))
                 self._history[name].append(change)
                 return change
 

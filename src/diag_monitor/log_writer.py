@@ -13,11 +13,13 @@ class LogWriter:
 
     def write(self, name: str, change: StatusChange) -> None:
         record = {
-            "timestamp": change.timestamp.isoformat(timespec="seconds"),
+            "timestamp": change.timestamp.isoformat(timespec="milliseconds"),
             "name": name,
             "prev": LEVEL_NAMES.get(change.prev_level) if change.prev_level is not None else None,
             "new": LEVEL_NAMES[change.new_level],
             "message": change.message,
+            "hardware_id": change.hardware_id,
+            "values": [{"key": key, "value": value} for key, value in change.values],
         }
         self._file.write(json.dumps(record, ensure_ascii=False) + "\n")
         self._file.flush()

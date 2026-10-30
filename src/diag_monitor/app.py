@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 from rich.markup import escape
 from textual.app import App, ComposeResult
@@ -7,6 +8,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Input, Static
 
 from diag_monitor import __version__
+from diag_monitor.export import export_snapshot
 from diag_monitor.store import DiagStore, LEVEL_OK, LEVEL_WARN, LEVEL_ERROR, LEVEL_STALE
 from diag_monitor.widgets.detail_view import DetailView
 from diag_monitor.widgets.history_view import HistoryView
@@ -44,6 +46,7 @@ class HelpScreen(ModalScreen):
                 "  [b]t[/b]         Switch topic\n"
                 "  [b]R[/b]         Reload subscription\n"
                 "  [b]Tab[/b]       Switch pane\n"
+                "  [b]e[/b]         Export diagnostic snapshot\n"
                 "  [b]\u2191[/b] [b]\u2193[/b]       Navigate\n"
                 "  [b]q[/b]         Quit\n"
                 "\n"
@@ -63,15 +66,18 @@ class DiagMonitorApp(App):
         ("question_mark", "help", "Help"),
         ("t", "switch_topic", "Switch Topic"),
         ("R", "reload", "Reload"),
+        ("e", "export_snapshot", "Export snapshot"),
     ]
 
-    def __init__(self, store: DiagStore, ros_bridge=None, **kwargs) -> None:
+    def __init__(self, store: DiagStore, ros_bridge=None,
+                 snapshot_file: Path = Path("diagnostics-snapshot.json"), **kwargs) -> None:
         super().__init__(**kwargs)
         self._store = store
         self._ros_bridge = ros_bridge
         self._no_data_notified: bool = False
         self._monitor_start: datetime = datetime.now()
         self._filter_text: str = ""
+        self._snapshot_file = snapshot_file
 
     def compose(self) -> ComposeResult:
         topic = self._ros_bridge.topic if self._ros_bridge else "/diagnostics"
@@ -83,7 +89,7 @@ class DiagMonitorApp(App):
             id="right-pane",
         )
         yield Static(
-            f" q:Quit  /:Filter  Tab:Pane  t:Topic  R:Reload  ?:Help"
+            f" q:Quit  /:Filter  Tab:Pane  e:Export  t:Topic  R:Reload  ?:Help"
             f"  │  v{__version__}  [@click=app.open_repo]github.com/whill-labs/ros2-diag-monitor[/]",
             id="footer",
         )
@@ -152,6 +158,16 @@ class DiagMonitorApp(App):
                     severity="warning",
                     timeout=10,
                 )
+
+    def action_export_snapshot(self) -> None:
+        items, _ = self._store.snapshot()
+        topic = self._ros_bridge.topic if self._ros_bridge else "/diagnostics"
+        try:
+            export_snapshot(self._snapshot_file, topic, list(items.values()))
+        except (OSError, UnicodeError) as exc:
+            self.notify(f"Snapshot export failed: {escape(str(exc))}", severity="error")
+        else:
+            self.notify(f"Exported {len(items)} diagnostics to {escape(str(self._snapshot_file))}")
 
     def action_reload(self) -> None:
         if self._ros_bridge is None:
