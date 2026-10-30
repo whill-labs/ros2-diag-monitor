@@ -28,6 +28,10 @@ class DetailView(Static):
             f"[bold]HW ID:[/] {item.hardware_id}",
             f"[bold]Updated:[/] {item.last_updated.strftime('%H:%M:%S')}",
         ]
+        if item.reported_level is not None:
+            reported = LEVEL_NAMES.get(item.reported_level, "UNKNOWN")
+            lines.append(f"[bold]Last reported level:[/] {reported}")
+            lines.append("No fresh diagnostic report; showing last received values.")
 
         if item.values:
             lines.append("")

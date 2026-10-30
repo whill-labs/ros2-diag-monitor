@@ -28,6 +28,11 @@ Screen {
     color: white;
 }
 
+#header.level-stale {
+    background: #a65f00;
+    color: white;
+}
+
 #item-list {
     row-span: 1;
     height: 100%;

@@ -21,7 +21,7 @@ uv sync
 # Run
 uv run diag-monitor
 
-# Run tests (all 9 tests, no ROS2 environment needed)
+# Run tests (no ROS2 environment needed)
 uv run pytest
 
 # Run a single test
@@ -83,6 +83,7 @@ Tags use the `v` prefix (e.g., `v0.1.2`).
 - **`rclpy` level type caveat:** `status.level` may be `int` or `bytes` depending on the ROS2 version. `ros_bridge.py`'s `_parse_level()` handles both.
 - **JSONL log format:** `{"timestamp":"...","name":"...","prev":"OK","new":"WARN","message":"..."}` (`prev` is `null` on the first observation).
 - **Default topic behavior:** `diag-monitor` starts on `/diagnostics_agg` by default, and the UI can switch topics with `t`.
+- **Freshness:** `DiagStore.snapshot()` derives STALE after `--stale-after` seconds (default 3; 0 disables) using monotonic time. It preserves the stored publisher status and level history. STALE is included in the summary; stream loss remains visible in the header.
 - **Key bindings:** `DiagMonitorApp.BINDINGS` is the source of truth (`q` quit, `/` filter, `?` help, `t` switch topic, `R` reload). Changing a binding means updating three places together: `BINDINGS`, the `HelpScreen` list in `app.py`, and the "Key Bindings" table in `README.md`.
 - **Name filter:** case-insensitive substring match on the item name, applied only when rendering in `_refresh()`. `DiagStore` still holds every item, so clearing the filter restores them immediately. An active filter is shown in the header.
 - **Out of scope (future candidates):** diagnostic_aggregator config display, manual clear/reset, multi-topic subscription, web UI.

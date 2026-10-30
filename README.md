@@ -46,9 +46,21 @@ diag-monitor
 # Monitor /diagnostics
 diag-monitor --topic /diagnostics
 
+# Set the per-diagnostic freshness timeout (default: 3 seconds)
+diag-monitor --stale-after 5
+
+# Disable local expiry for diagnostics that only publish on changes
+diag-monitor --stale-after 0
+
 # Save status changes to file
 diag-monitor --log-file diag.log
 ```
+
+Silent diagnostics are shown as STALE using monotonic elapsed time. The last
+reported level, message and values remain available; a new report restores the
+published level. STALE contributes to the summary color and count. An empty
+stream shows `Waiting for diagnostics`; a stopped stream keeps a visible age
+warning. Local expiry does not change the publisher's status or level history.
 
 ## Key Bindings
 

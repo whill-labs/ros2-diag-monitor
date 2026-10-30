@@ -1,4 +1,4 @@
-from datetime import datetime
+from time import monotonic
 
 from rich.markup import escape
 from textual.app import App, ComposeResult
@@ -13,7 +13,10 @@ from diag_monitor.widgets.history_view import HistoryView
 from diag_monitor.widgets.item_list import ItemList
 
 _NO_DATA_TIMEOUT = 10.0  # seconds
-_HEADER_LEVEL_CLASSES = {LEVEL_OK: "level-ok", LEVEL_WARN: "level-warn", LEVEL_ERROR: "level-error"}
+_HEADER_LEVEL_CLASSES = {
+    LEVEL_OK: "level-ok", LEVEL_WARN: "level-warn", LEVEL_ERROR: "level-error",
+    LEVEL_STALE: "level-stale",
+}
 _ALL_HEADER_LEVEL_CLASSES = set(_HEADER_LEVEL_CLASSES.values())
 
 
@@ -70,7 +73,7 @@ class DiagMonitorApp(App):
         self._store = store
         self._ros_bridge = ros_bridge
         self._no_data_notified: bool = False
-        self._monitor_start: datetime = datetime.now()
+        self._monitor_start = monotonic()
         self._filter_text: str = ""
 
     def compose(self) -> ComposeResult:
@@ -100,19 +103,28 @@ class DiagMonitorApp(App):
         total = len(items)
         warn_count = sum(1 for i in items.values() if i.level == LEVEL_WARN)
         error_count = sum(1 for i in items.values() if i.level == LEVEL_ERROR)
+        stale_count = sum(1 for i in items.values() if i.level == LEVEL_STALE)
         header_text = f" diag-monitor  {topic}  \u25cf {total} items"
+        if not items:
+            header_text += "  Waiting for diagnostics"
         if warn_count:
             header_text += f"  \u26a0 {warn_count}"
         if error_count:
             header_text += f"  \u2717 {error_count}"
+        if stale_count:
+            header_text += f"  STALE {stale_count}"
+        last = self._store.last_received
+        elapsed = monotonic() - (last if last is not None else self._monitor_start)
+        if last is not None and elapsed >= (self._store.stale_after or _NO_DATA_TIMEOUT):
+            header_text += f"  No data for {int(elapsed)}s"
         if self._filter_text:
             header_text += f"  \u2502  Filter: {escape(self._filter_text)}"
         header = self.query_one("#header", Static)
         header.update(header_text)
 
-        # Update header color based on worst level (STALE excluded)
-        levels = [i.level for i in items.values() if i.level != LEVEL_STALE]
-        worst = max(levels) if levels else None
+        # Unknown freshness must never produce a healthy summary.
+        levels = [i.level for i in items.values()]
+        worst = LEVEL_ERROR if LEVEL_ERROR in levels else (max(levels) if levels else None)
         header.remove_class(*_ALL_HEADER_LEVEL_CLASSES)
         if worst is not None and worst in _HEADER_LEVEL_CLASSES:
             header.add_class(_HEADER_LEVEL_CLASSES[worst])
@@ -139,10 +151,9 @@ class DiagMonitorApp(App):
             history_view.show_history(None)
 
         # No-data timeout: suggest switching to /diagnostics
+        if elapsed < _NO_DATA_TIMEOUT:
+            self._no_data_notified = False
         if not self._no_data_notified and self._ros_bridge is not None:
-            last = self._store.last_msg_time
-            ref = last if last is not None else self._monitor_start
-            elapsed = (datetime.now() - ref).total_seconds()
             if elapsed >= _NO_DATA_TIMEOUT:
                 self._no_data_notified = True
                 topic = self._ros_bridge.topic
@@ -158,7 +169,7 @@ class DiagMonitorApp(App):
             return
         self._ros_bridge.reload()
         self._no_data_notified = False
-        self._monitor_start = datetime.now()
+        self._monitor_start = monotonic()
         self.notify("Reloaded")
 
     def action_open_repo(self) -> None:
@@ -173,7 +184,7 @@ class DiagMonitorApp(App):
         new_topic = "/diagnostics_agg" if current == "/diagnostics" else "/diagnostics"
         self._ros_bridge.switch_topic(new_topic)
         self._no_data_notified = False
-        self._monitor_start = datetime.now()
+        self._monitor_start = monotonic()
 
     def action_filter(self) -> None:
         filter_input = self.query_one("#filter-input", _FilterInput)

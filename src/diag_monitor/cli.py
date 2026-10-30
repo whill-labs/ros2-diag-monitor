@@ -1,8 +1,19 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from pathlib import Path
+
+
+def stale_timeout(value: str) -> float:
+    try:
+        seconds = float(value)
+    except ValueError:
+        seconds = float("nan")
+    if not math.isfinite(seconds) or seconds < 0:
+        raise argparse.ArgumentTypeError("must be a finite non-negative number of seconds")
+    return seconds
 
 
 def main() -> None:
@@ -14,6 +25,10 @@ def main() -> None:
         "--topic",
         default="/diagnostics_agg",
         help="Diagnostics topic to subscribe (default: /diagnostics_agg)",
+    )
+    parser.add_argument(
+        "--stale-after", type=stale_timeout, default=3.0,
+        help="Mark silent diagnostics STALE after this many seconds (default: 3; 0 disables)",
     )
     parser.add_argument(
         "--log-file",
@@ -39,7 +54,7 @@ def main() -> None:
     from diag_monitor.ros_bridge import RosBridge
     from diag_monitor.app import DiagMonitorApp
 
-    store = DiagStore()
+    store = DiagStore(stale_after=args.stale_after)
     log_writer = LogWriter(args.log_file) if args.log_file else None
     bridge = RosBridge(store, args.topic, log_writer)
 
