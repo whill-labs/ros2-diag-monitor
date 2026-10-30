@@ -50,6 +50,13 @@ diag-monitor --topic /diagnostics
 diag-monitor --log-file diag.log
 ```
 
+Log open/write/flush failures disable further file writes and remain visible as
+`Logging failed` in the header. Diagnostic reception continues; restart the tool
+after fixing the output path or disk space to resume logging. Unexpected ROS
+receiver termination is shown persistently as `Receiver stopped`, with an error
+summary instead of a healthy last-known state.
+Restart the tool to reconnect after a receiver failure; `R` only reloads the subscription.
+
 ## Key Bindings
 
 | Key | Action |

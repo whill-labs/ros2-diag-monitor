@@ -21,7 +21,7 @@ uv sync
 # Run
 uv run diag-monitor
 
-# Run tests (all 9 tests, no ROS2 environment needed)
+# Run tests (no ROS2 environment needed)
 uv run pytest
 
 # Run a single test
@@ -52,6 +52,11 @@ CLI (`cli.py`) → orchestrates startup and shutdown
 ```
 
 **Threading model:** `RosBridge` runs `rclpy.spin()` in a daemon thread. The Textual UI runs in the main thread and reads `store.snapshot()` every second. All store mutations are protected by a `Lock`.
+
+`LogWriter.error` records output failures without interrupting reception; further
+writes are disabled after failure. `RosBridge.receiver_error` exposes unexpected
+spin termination. Both failures remain visible in the UI header. Normal shutdown
+sets a stopping flag before shutting down the ROS context.
 
 **Level constants:** `store.py` defines `LEVEL_OK=0`, `LEVEL_WARN=1`, `LEVEL_ERROR=2`, and `LEVEL_STALE=3`.
 

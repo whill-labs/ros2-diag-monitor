@@ -22,6 +22,8 @@ class RosBridge:
         self._log_writer = log_writer
         self._thread: threading.Thread | None = None
         self._node = None
+        self._receive_error: str | None = None
+        self._stopping = False
 
     def start(self) -> None:
         import rclpy
@@ -37,12 +39,32 @@ class RosBridge:
             self._on_diagnostics,
             10,
         )
-        self._thread = threading.Thread(target=rclpy.spin, args=(self._node,), daemon=True)
+        self._stopping = False
+        self._receive_error = None
+        self._thread = threading.Thread(target=self._spin, daemon=True)
         self._thread.start()
 
-    def _on_diagnostics(self, msg) -> None:
-        from diagnostic_msgs.msg import DiagnosticArray
+    def _spin(self) -> None:
+        import rclpy
 
+        try:
+            rclpy.spin(self._node)
+        except Exception as exc:
+            if not self._stopping:
+                self._receive_error = f"{type(exc).__name__}: {exc}"
+        finally:
+            if not self._stopping and self._receive_error is None:
+                self._receive_error = "ROS receiver exited unexpectedly"
+
+    @property
+    def receiver_error(self) -> str | None:
+        return self._receive_error
+
+    @property
+    def logging_error(self) -> str | None:
+        return self._log_writer.error if self._log_writer is not None else None
+
+    def _on_diagnostics(self, msg) -> None:
         for status in msg.status:
             values = [(kv.key, kv.value) for kv in status.values]
             change = self._store.update(
@@ -83,6 +105,7 @@ class RosBridge:
     def shutdown(self) -> None:
         import rclpy
 
+        self._stopping = True
         # Stop rclpy first so spin() returns
         rclpy.try_shutdown()
         # Wait for spin thread to finish

@@ -107,12 +107,22 @@ class DiagMonitorApp(App):
             header_text += f"  \u2717 {error_count}"
         if self._filter_text:
             header_text += f"  \u2502  Filter: {escape(self._filter_text)}"
+        receiver_error = getattr(self._ros_bridge, "receiver_error", None)
+        logging_error = getattr(self._ros_bridge, "logging_error", None)
+        if logging_error:
+            header_text = f"Logging failed: {escape(logging_error)} |{header_text}"
+        if receiver_error:
+            header_text = f"Receiver stopped: {escape(receiver_error)} |{header_text}"
         header = self.query_one("#header", Static)
         header.update(header_text)
 
         # Update header color based on worst level (STALE excluded)
         levels = [i.level for i in items.values() if i.level != LEVEL_STALE]
         worst = max(levels) if levels else None
+        if receiver_error:
+            worst = LEVEL_ERROR
+        elif logging_error and worst in (None, LEVEL_OK):
+            worst = LEVEL_WARN
         header.remove_class(*_ALL_HEADER_LEVEL_CLASSES)
         if worst is not None and worst in _HEADER_LEVEL_CLASSES:
             header.add_class(_HEADER_LEVEL_CLASSES[worst])
